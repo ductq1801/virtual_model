@@ -2,7 +2,8 @@ import os
 import cv2
 import numpy as np
 import gradio as gr
-from inference import run_inference
+from inference import run_inference,gen_model
+from model import Vmodel
 
 
 # points color and marker
@@ -31,8 +32,8 @@ video_examples = [
     os.path.join(os.path.dirname(__file__), "./images/video2.mp4")
 ]
 
-
 with gr.Blocks() as demo:
+    gen_pipe = Vmodel()
     with gr.Row():
         gr.Markdown(
             '''# Segment Anything!🚀
@@ -95,13 +96,16 @@ with gr.Blocks() as demo:
                                             info='''A small threshold will generate more objects, but may causing OOM. 
                                             A big threshold may not detect objects, resulting in an error ''')
                 # run button
-                button = gr.Button("Auto!")
+                button = gr.Button("segment!")
+                gen_button = gr.Button("Gen!")
             # show the image with mask
             with gr.Tab(label='Image+Mask'):
                 output_image = gr.Image(type='numpy')
             # show only mask
             with gr.Tab(label='Mask'):
                 output_mask = gr.Image(type='numpy')
+            with gr.Tab(label='Virtual Model'):
+                output_gen = gr.Image(type='pil')
         def process_example(img, ori_img, sel_p):
             return ori_img, []
 
@@ -111,23 +115,6 @@ with gr.Blocks() as demo:
             outputs=[original_image, selected_points],
 	        fn=process_example,
 	        run_on_click=True
-        )
-
-    # Segment video
-    with gr.Tab(label='Video'):
-        with gr.Row().style(equal_height=True):
-            with gr.Column():
-                input_video = gr.Video()
-                with gr.Row():
-                    button_video = gr.Button("Auto!")
-            output_video = gr.Video(format='mp4')
-        gr.Markdown('''
-        **Note:** processing video will take a long time, please upload a short video.
-        ''')
-        gr.Examples(
-            examples=video_examples,
-            inputs=input_video,
-            outputs=output_video
         )
 
     # once user upload an image, the original image is stored in `original_image`
@@ -186,10 +173,8 @@ with gr.Blocks() as demo:
                                     crop_nms_thresh, owl_vit_threshold, original_image, text, selected_points],
                  outputs=[output_image, output_mask])
     # button video
-    button_video.click(run_inference, inputs=[device, model_type, points_per_side, pred_iou_thresh, stability_score_thresh,
-                                    min_mask_region_area, stability_score_offset, box_nms_thresh, crop_n_layers,
-                                    crop_nms_thresh, owl_vit_threshold, input_video, text],
-                       outputs=[output_video])
+
+    gen_button.click(gen_model, inputs=[gen_pipe,output_image,output_mask],outputs=[output_gen])
 
 
 demo.queue().launch(debug=True,share=True)

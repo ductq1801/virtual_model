@@ -188,3 +188,7 @@ def run_inference(device, model_type, points_per_side, pred_iou_thresh, stabilit
 		return generator_inference(device, model_type, points_per_side, pred_iou_thresh, stability_score_thresh,
 		                           min_mask_region_area, stability_score_offset, box_nms_thresh, crop_n_layers,
 		                           crop_nms_thresh, input_x)
+def gen_model(vmodel,img,mask):
+  vmodel.new_generator()
+  img = gen_model(img,mask)
+  return img
