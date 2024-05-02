@@ -162,7 +162,7 @@ def create_demo(gen_pipe,model_type,device):
                  outputs=[output_image, output_mask])
     # button video
     def gen_model(input_image,output_mask,add_prompt=None,add_negative_prompt=None):
-        img = gen_pipe.gen_img(output_image,output_mask,add_prompt,add_negative_prompt)
+        img = gen_pipe.gen_img(input_image,output_mask,add_prompt,add_negative_prompt)
         return img
     gen_button.click(gen_model, inputs=[output_image,output_mask],outputs=[output_gen])
 
