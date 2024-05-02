@@ -40,12 +40,18 @@ class Vmodel:
         canny_image = canny_image[:, :, None]
         canny_image = np.concatenate([canny_image, canny_image, canny_image], axis=2)
         return Image.fromarray(canny_image)
-    
+    def create_mask(self,mask):
+        thresh = 200
+        fn = lambda x : 255 if x > thresh else 0
+        r = mask.convert('L').point(fn, mode='1')
+        return r
     def gen_img(self,image:PIL.Image,mask:PIL.Image,add_prompt=None,add_nega_prompt=None) -> PIL.Image:
         image = Image.fromarray(image)
         w, h = image.size
         control1 = self.dwpose(image).resize((w, h))
-        mask = self.sd_pipe.mask_processor.blur(mask, blur_factor=14)
+        mask= Image.fromarray(mask)
+        mask = self.create_mask(mask)
+        mask = self.sd_pipe.mask_processor.blur(mask, blur_factor=12)
         img_np = np.array(image)
         control2 = self.get_canny(img_np)
         control3 = self.depth_estimator(image)['depth']

@@ -4,5 +4,5 @@ git+https://github.com/huggingface/diffusers
 controlnet-aux
 accelerate
 torch==2.1.0
-torchvision==0.16.0
+#torchvision==0.16.0
 xformers==0.0.22.post7

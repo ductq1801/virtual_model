@@ -32,20 +32,8 @@ video_examples = [
     os.path.join(os.path.dirname(__file__), "./images/video2.mp4")
 ]
 
-with gr.Blocks() as demo:
-    gen_pipe = Vmodel()
-    with gr.Row():
-        gr.Markdown(
-            '''# Segment Anything!🚀
-            The Segment Anything Model (SAM) produces high quality object masks from input prompts such as points or boxes, and it can be used to generate masks for all objects in an image. More information can be found in [**Official Project**](https://segment-anything.com/).
-            [![Duplicate this Space](https://huggingface.co/datasets/huggingface/badges/raw/main/duplicate-this-space-sm.svg)](https://huggingface.co/spaces/AIBoy1993/segment_anything_webui?duplicate=true)
-            '''
-        )
-        with gr.Row():
-            # select model
-            model_type = gr.Dropdown(["vit_b", "vit_l", "vit_h"], value='vit_b', label="Select Model")
-            # select device
-            device = gr.Dropdown(["cpu", "cuda"], value='cpu', label="Select Device")
+
+def create_demo(gen_pipe,model_type,device):
 
     # SAM parameters
     with gr.Accordion(label='Parameters', open=False):
@@ -173,8 +161,33 @@ with gr.Blocks() as demo:
                                     crop_nms_thresh, owl_vit_threshold, original_image, text, selected_points],
                  outputs=[output_image, output_mask])
     # button video
+    def gen_model(input_image,output_mask,add_prompt=None,add_negative_prompt=None):
+        img = gen_pipe.gen_img(output_image,output_mask,add_prompt,add_negative_prompt)
+        return img
+    gen_button.click(gen_model, inputs=[output_image,output_mask],outputs=[output_gen])
 
-    gen_button.click(gen_model, inputs=[gen_pipe,output_image,output_mask],outputs=[output_gen])
+def main():
+    model = Vmodel()
+    print('Models uploaded successfully')
+    
+    with gr.Blocks() as demo:
+        with gr.Row():
+            gr.Markdown(
+                '''# Segment Anything!🚀
+                The Segment Anything Model (SAM) produces high quality object masks from input prompts such as points or boxes, and it can be used to generate masks for all objects in an image. More information can be found in [**Official Project**](https://segment-anything.com/).
+                [![Duplicate this Space](https://huggingface.co/datasets/huggingface/badges/raw/main/duplicate-this-space-sm.svg)](https://huggingface.co/spaces/AIBoy1993/segment_anything_webui?duplicate=true)
+                '''
+            )
+        with gr.Row():
+            # select model
+            model_type = gr.Dropdown(["vit_b", "vit_l", "vit_h"], value='vit_b', label="Select Model")
+            # select device
+            device = gr.Dropdown(["cpu", "cuda"], value='cpu', label="Select Device")
+        
+        create_demo(model,model_type,device)
+
+    demo.queue().launch(share=True)
 
 
-demo.queue().launch(debug=True,share=True)
+if __name__ == '__main__':
+    main()
