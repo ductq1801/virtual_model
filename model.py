@@ -51,7 +51,8 @@ class Vmodel:
         control1 = self.dwpose(image).resize((w, h))
         mask= Image.fromarray(mask)
         mask = self.create_mask(mask)
-        mask = self.sd_pipe.mask_processor.blur(mask, blur_factor=12)
+        mask = mask.convert('RGB')
+        mask = self.sd_pipe.mask_processor.blur(mask, blur_factor=12,)
         img_np = np.array(image)
         control2 = self.get_canny(img_np)
         control3 = self.depth_estimator(image)['depth']
