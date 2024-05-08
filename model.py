@@ -1,12 +1,24 @@
 import torch
-from diffusers import StableDiffusionInpaintPipeline,StableDiffusionControlNetInpaintPipeline, ControlNetModel,DDIMScheduler
+from diffusers import StableDiffusionControlNetInpaintPipeline, ControlNetModel
 from controlnet_aux import DWposeDetector
 from transformers import pipeline
+from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
 import cv2
 import numpy as np
 from PIL import Image
 import PIL
 import random
+from pydantic import BaseModel
+from typing import List
+models = {
+	'vit_b': './checkpoints/sam_vit_b_01ec64.pth',
+	'vit_l': './checkpoints/sam_vit_l_0b3195.pth',
+	'vit_h': './checkpoints/sam_vit_h_4b8939.pth'
+}
+
+colors = [(255, 0, 0), (0, 255, 0)]
+markers = [1, 5]
+
 class Vmodel:
     def __init__(self):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -45,7 +57,7 @@ class Vmodel:
         fn = lambda x : 255 if x > thresh else 0
         r = mask.convert('L').point(fn, mode='1')
         return r
-    def gen_img(self,image:PIL.Image,mask:PIL.Image,add_prompt=None,add_nega_prompt=None) -> PIL.Image:
+    def gen_img(self,image:PIL.Image,mask:PIL.Image,add_prompt=None,add_nega_prompt=None,steps=40,n_samples=1) -> PIL.Image:
         image = Image.fromarray(image)
         w, h = image.size
         control1 = self.dwpose(image).resize((w, h))
@@ -62,10 +74,54 @@ class Vmodel:
             prompt = ','.join(add_prompt,prompt)
         if add_nega_prompt:
             negative_prompt = ','.join(add_prompt,negative_prompt)
-        result = self.sd_pipe(guidance_scale=9.0,num_inference_steps=60,image=image ,\
+        result = self.sd_pipe(guidance_scale=9.0,num_inference_steps=steps,num_images_per_prompt=n_samples,image=image ,\
                               mask_image=mask,control_image = [control1,control2,control3],\
                                 controlnet_conditioning_scale=[0.85,0.55,0.55], prompt=prompt, \
                                     negative_prompt=negative_prompt, generator=self.generator)
-        result = result.images[0]
+        result = result
         return result
         
+
+class Segment:
+    def __init__(self,model_type,device):
+        sam = sam_model_registry[model_type](checkpoint=models[model_type]).to(device)
+        self.mask_generator = SamAutomaticMaskGenerator(
+		sam,
+		crop_overlap_ratio=512 / 1500,
+		crop_n_points_downscale_factor=1,
+		point_grids=None,
+		output_mode='binary_mask'
+	)
+    def segment_one(self,img:PIL.Image):
+        masks = self.mask_generator.generate(img)
+        sorted_anns = sorted(masks, key=(lambda x: x['area']), reverse=True)
+        mask_all = np.ones((img.shape[0], img.shape[1], 3))
+        for ann in sorted_anns:
+            m = ann['segmentation']
+            color_mask = np.random.random((1, 3)).tolist()[0]
+            for i in range(3):
+                mask_all[m == True, i] = color_mask[i]
+        result = img / 255 * 0.3 + mask_all * 0.7
+        return result, mask_all
+    def segment(self,img:np.narray,points:list[tuple]):
+        for point in points:
+            cv2.drawMarker(img, point, colors[0], markerType=markers[0], markerSize=10, thickness=3)
+        
+        if img[..., 0][0, 0] == img[..., 2][0, 0]:  # BGR to RGB
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        result, mask_all = self.segment_one(img)
+        
+        return Image.fromarray(result), Image.fromarray(mask_all)
+    
+class Points(BaseModel):
+    x_points : List[int]
+    y_points : List[int]
+    base_image: str
+class Model_gen(BaseModel):
+    img_base64:str
+    mask_base64:str
+    user_prompt:str | None = None
+    user_negaprompt:str | None=None
+    quality:int | None=0
+    n_sample:int | None=1
+
