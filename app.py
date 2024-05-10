@@ -5,6 +5,10 @@ from model import Vmodel,Segment,Points,Model_gen
 from PIL import Image
 import base64
 from io import BytesIO
+import nest_asyncio
+from pyngrok import ngrok
+import uvicorn
+import numpy as np
 
 device = "cuda"
 
@@ -12,7 +16,7 @@ app = FastAPI()
 
 model = Vmodel()
 segment = Segment(model_type="vit_h",device=device)
-
+aut = "2gH5CZSLKRoH536OP1RGMXBq0nX_7A8G3sfXEDSJsDJ4jCHpo"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
@@ -20,24 +24,27 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
-
+@app.get("/")
+def home():
+  return "hello"
 @app.post("/segment/")
 async def img_segment(data:Points):
     #content = await file.read()
-    img = Image.open(BytesIO(base64.b64decode(data['base_image'])))
-    x_points = list(map(int, data['x_points']))
-    y_points = list(map(int, data['y_points']))
+    img = Image.open(BytesIO(data.base_image.encode('latin1')))
+    img_np = np.array(img)
+    x_points = list(map(int, data.x_points))
+    y_points = list(map(int, data.y_points))
     if len(x_points) != len(y_points):
         raise HTTPException(status_code=400, detail="Size of x list and y list not equal")
     points = zip(x_points,y_points)
-    img,mask = segment.segment(points=points,img=img)
-    buffered = BytesIO()
+    img,mask = segment.segment(points=points,img=img_np)
+    buffered1 = BytesIO()
+    buffered2 = BytesIO()
+    img.save(buffered1, format="JPEG")
+    img_base64 = buffered1.getvalue().decode('latin1')
 
-    img.save(buffered, format="JPEG")
-    img_base64 = base64.b64encode(buffered.getvalue())
-
-    mask.save(buffered, format="JPEG")
-    mask_base64 = base64.b64encode(buffered.getvalue())
+    mask.save(buffered2, format="JPEG")
+    mask_base64 = buffered2.getvalue().decode('latin1')
     return {'results':img_base64,
             'mask':mask_base64}
 @app.post("/model_gen/")
@@ -56,3 +63,10 @@ async def predict_image(data:Model_gen):
         img.save(buffered, format="JPEG")
         results.append(base64.b64encode(buffered.getvalue()))
     return {"results":results}
+if __name__ == "__main__":
+  ngrok.set_auth_token(aut)
+  ngrok_tunnel = ngrok.connect(8000)
+  
+  print('Public URL:', ngrok_tunnel.public_url)
+  nest_asyncio.apply()
+  uvicorn.run(app, port=8000)

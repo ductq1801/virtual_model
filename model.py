@@ -110,8 +110,7 @@ class Segment:
         if img[..., 0][0, 0] == img[..., 2][0, 0]:  # BGR to RGB
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         result, mask_all = self.segment_one(img)
-        
-        return Image.fromarray(result), Image.fromarray(mask_all)
+        return Image.fromarray((result * 255).astype(np.uint8)), Image.fromarray((mask_all * 255).astype(np.uint8))
     
 class Points(BaseModel):
     x_points : List[int]
