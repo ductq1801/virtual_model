@@ -19,7 +19,9 @@ python demo.py
 1. Clothes segmentation
 ```
 import requests
+
 url = 
+
 """
 input:
     base_image: string base64 image
@@ -27,8 +29,8 @@ input:
     y_points: [y1,y2,y3] list y-axis of points
 output:
     {
-        'results' : string base64 image + mask (latin1 encode),
-        'mask': string base64 only mask,
+        results : string base64 image + mask (latin1 encode),
+        mask: string base64 only mask,
     }
 """
 mydata = {
@@ -43,7 +45,6 @@ x = requests.post(url=url+'/segment/',json=mydata)
 ```
 import requests
 
-#api
 url = 
 
 """
@@ -59,12 +60,12 @@ output:
         'results': list of string base64 image 
     }
 """
-mydata = {'img_base64':str_img,
-          'mask_base64':str_mask,
-          'user_prompt':None,
-          'negative_prompt':None,
-          'quality':2,
-          "n_sample":2,}
+mydata = {img_base64:str_img,
+          mask_base64:str_mask,
+          user_prompt:None,
+          negative_prompt:None,
+          quality:2,
+          n_sample:2,}
 
 x = requests.post(url=url+'/model_gen/',json=mydata)
 ```
