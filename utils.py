@@ -1,4 +1,4 @@
-
+import PIL
 from PIL import Image
 from io import BytesIO
 def PIL_to_base64(image:PIL.Image):
