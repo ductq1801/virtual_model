@@ -59,7 +59,7 @@ async def predict_image(data:Model_gen):
     quality = data.quality
     n_sample = data.n_sample
 
-    output = Vmodel.gen_img(image=img,mask=mask,add_prompt=user_prompt,add_nega_prompt=user_negaprompt,steps=quality,n_samples=n_sample)
+    output = model.gen_img(image=img,mask=mask,add_prompt=user_prompt,add_nega_prompt=user_negaprompt,steps=quality,n_samples=n_sample)
     buffered = BytesIO()
     results = []
     for img in output:
