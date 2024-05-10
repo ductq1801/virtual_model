@@ -29,12 +29,8 @@ def home():
   return "hello"
 @app.post("/segment/")
 async def img_segment(data:Points):
-    #content = await file.read()
     img = Image.open(BytesIO(data.base_image.encode('latin1')))
     img_np = np.array(img)
-    # print(type(data.x_points[0]))
-    # x_points = list(map(int, data.x_points))
-    # y_points = list(map(int, data.y_points))
     if len(data.x_points) != len(data.y_points):
         raise HTTPException(status_code=400, detail="Size of x list and y list not equal")
     points = zip(data.y_points,data.x_points)
@@ -51,20 +47,23 @@ async def img_segment(data:Points):
 @app.post("/model_gen/")
 async def predict_image(data:Model_gen):
     img = base64_to_PIL(data.img_base64)
-    #img = Image.open(BytesIO(base64.b64decode(data['image_base64'])))
     mask = base64_to_PIL(data.mask_base64)
-    #mask = Image.open(BytesIO(base64.b64decode(data['mask_base64'])))
     user_prompt = data.user_prompt
     user_negaprompt = data.user_negaprompt
     quality = data.quality
+    step = max(0,quality)*20 + 40
+    if quality==0:
+      step = 40
+    elif quality==1:
+      step = 60
+    else:
+      step = 80
     n_sample = data.n_sample
-
-    output = model.gen_img(image=img,mask=mask,add_prompt=user_prompt,add_nega_prompt=user_negaprompt,steps=quality,n_samples=n_sample)
-    buffered = BytesIO()
+    output = model.gen_img(image=img,mask=mask,add_prompt=user_prompt,add_nega_prompt=user_negaprompt,steps=step,n_samples=n_sample)
     results = []
-    for img in output:
-        img.save(buffered, format="JPEG")
-        results.append(base64.b64encode(buffered.getvalue()))
+    print(output)
+    for im in output:
+        results.append(PIL_to_base64(im))
     return {"results":results}
 if __name__ == "__main__":
   ngrok.set_auth_token(aut)

@@ -59,10 +59,10 @@ class Vmodel:
         r = mask.convert('L').point(fn, mode='1')
         return r
     def gen_img(self,image:PIL.Image,mask:PIL.Image,add_prompt=None,add_nega_prompt=None,steps=40,n_samples=1) -> PIL.Image:
-        image = Image.fromarray(image)
+        #image = Image.fromarray(image)
         w, h = image.size
         control1 = self.dwpose(image).resize((w, h))
-        mask= Image.fromarray(mask)
+        #mask= Image.fromarray(mask)
         mask = self.create_mask(mask)
         mask = mask.convert('RGB')
         mask = self.sd_pipe.mask_processor.blur(mask, blur_factor=12,)
@@ -71,6 +71,7 @@ class Vmodel:
         control3 = self.depth_estimator(image)['depth']
         prompt = self.base_prompt
         negative_prompt = self.base_negative_prompt
+        
         if add_prompt:
             prompt = ','.join(add_prompt,prompt)
         if add_nega_prompt:
@@ -79,8 +80,8 @@ class Vmodel:
                               mask_image=mask,control_image = [control1,control2,control3],\
                                 controlnet_conditioning_scale=[0.85,0.55,0.55], prompt=prompt, \
                                     negative_prompt=negative_prompt, generator=self.generator)
-        result = result
-        return result
+        #result = result
+        return result.images
         
 
 class Segment:
@@ -118,10 +119,7 @@ class Segment:
         self.predictor.set_image(img)
         points = torch.Tensor([p for p in points_in]).to(self.device).unsqueeze(1)
         labels = torch.Tensor([1]*int(points.shape[-1])).to(self.device).unsqueeze(1)
-        print(points.shape)
-        print(labels.shape)
         transformed_points = self.predictor.transform.apply_coords_torch(points, img.shape[:2])
-        print(transformed_points.shape)
         masks, scores, logits = self.predictor.predict_torch(
 		point_coords=transformed_points,
 		point_labels=labels,
@@ -147,7 +145,7 @@ class Segment:
         #     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         result, mask_all = self.segment_in_one(img)
         return Image.fromarray((result * 255).astype(np.uint8)), Image.fromarray((mask_all * 255).astype(np.uint8))
-    
+  
 class Points(BaseModel):
     x_points : List[int]
     y_points : List[int]
