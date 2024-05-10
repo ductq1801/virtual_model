@@ -103,7 +103,7 @@ class Segment:
                 mask_all[m == True, i] = color_mask[i]
         result = img / 255 * 0.3 + mask_all * 0.7
         return result, mask_all
-    def segment(self,img:np.narray,points:list[tuple]):
+    def segment(self,img:np.array,points:list[tuple]):
         for point in points:
             cv2.drawMarker(img, point, colors[0], markerType=markers[0], markerSize=10, thickness=3)
         
