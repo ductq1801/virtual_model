@@ -114,11 +114,14 @@ class Segment:
                 mask_all[m == True, i] = color_mask[i]
         result = img / 255 * 0.3 + mask_all * 0.7
         return result, mask_all
-    def points_segment(self,img:np.ndarray,points:list[tuple]):
+    def points_segment(self,img:np.ndarray,points_in:list[tuple]):
         self.predictor.set_image(img)
-        points = torch.Tensor([p for p, _ in points]).to(self.device).unsqueeze(1)
-        labels = torch.Tensor([1 for _ in points]).to(self.device).unsqueeze(1)
+        points = torch.Tensor([p for p in points_in]).to(self.device).unsqueeze(1)
+        labels = torch.Tensor([1]*int(points.shape[-1])).to(self.device).unsqueeze(1)
+        print(points.shape)
+        print(labels.shape)
         transformed_points = self.predictor.transform.apply_coords_torch(points, img.shape[:2])
+        print(transformed_points.shape)
         masks, scores, logits = self.predictor.predict_torch(
 		point_coords=transformed_points,
 		point_labels=labels,
@@ -135,7 +138,7 @@ class Segment:
         gc.collect()
         torch.cuda.empty_cache()
         self.predictor.reset_image()
-        return img, mask_all
+        return Image.fromarray((img * 255).astype(np.uint8)), Image.fromarray((mask_all * 255).astype(np.uint8))
     def auto_segment(self,img:np.ndarray):
         # for point in points:
         #     cv2.drawMarker(img, point, colors[1], markerType=markers[1], markerSize=10, thickness=3)

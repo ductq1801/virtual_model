@@ -32,12 +32,13 @@ async def img_segment(data:Points):
     #content = await file.read()
     img = Image.open(BytesIO(data.base_image.encode('latin1')))
     img_np = np.array(img)
-    x_points = list(map(int, data.x_points))
-    y_points = list(map(int, data.y_points))
-    if len(x_points) != len(y_points):
+    # print(type(data.x_points[0]))
+    # x_points = list(map(int, data.x_points))
+    # y_points = list(map(int, data.y_points))
+    if len(data.x_points) != len(data.y_points):
         raise HTTPException(status_code=400, detail="Size of x list and y list not equal")
-    points = zip(y_points,x_points)
-    img,mask = segment.segment(points=points,img=img_np)
+    points = zip(data.y_points,data.x_points)
+    img,mask = segment.points_segment(points_in=points,img=img_np)
     buffered1 = BytesIO()
     buffered2 = BytesIO()
     img.save(buffered1, format="JPEG")
