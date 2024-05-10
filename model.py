@@ -87,6 +87,14 @@ class Segment:
         sam = sam_model_registry[model_type](checkpoint=models[model_type]).to(device)
         self.mask_generator = SamAutomaticMaskGenerator(
 		sam,
+        points_per_side=32,
+        pred_iou_thresh=0.85,
+        stability_score_thresh=0.95,
+        min_mask_region_area = 0,
+        stability_score_offset=1,
+        box_nms_thresh=0.75,
+        crop_n_layers=0,
+        crop_nms_thresh=0.7,
 		crop_overlap_ratio=512 / 1500,
 		crop_n_points_downscale_factor=1,
 		point_grids=None,
