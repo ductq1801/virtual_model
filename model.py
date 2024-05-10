@@ -10,6 +10,7 @@ import PIL
 import random
 from pydantic import BaseModel
 from typing import List
+import gc
 models = {
 	'vit_b': './checkpoints/sam_vit_b_01ec64.pth',
 	'vit_l': './checkpoints/sam_vit_l_0b3195.pth',
@@ -84,11 +85,12 @@ class Vmodel:
 
 class Segment:
     def __init__(self,model_type,device):
+        self.device = device
         sam = sam_model_registry[model_type](checkpoint=models[model_type]).to(device)
         self.mask_generator = SamAutomaticMaskGenerator(
 		sam,
         points_per_side=32,
-        pred_iou_thresh=0.85,
+        pred_iou_thresh=0.88,
         stability_score_thresh=0.95,
         min_mask_region_area = 0,
         stability_score_offset=1,
@@ -100,7 +102,8 @@ class Segment:
 		point_grids=None,
 		output_mode='binary_mask'
 	)
-    def segment_one(self,img:PIL.Image):
+        self.predictor = SamPredictor(sam)
+    def segment_in_one(self,img:PIL.Image):
         masks = self.mask_generator.generate(img)
         sorted_anns = sorted(masks, key=(lambda x: x['area']), reverse=True)
         mask_all = np.ones((img.shape[0], img.shape[1], 3))
@@ -111,13 +114,35 @@ class Segment:
                 mask_all[m == True, i] = color_mask[i]
         result = img / 255 * 0.3 + mask_all * 0.7
         return result, mask_all
-    def segment(self,img:np.array,points:list[tuple]):
-        for point in points:
-            cv2.drawMarker(img, point, colors[1], markerType=markers[1], markerSize=10, thickness=3)
+    def points_segment(self,img:np.ndarray,points:list[tuple]):
+        self.predictor.set_image(img)
+        points = torch.Tensor([p for p, _ in points]).to(self.device).unsqueeze(1)
+        labels = torch.Tensor([1 for _ in points]).to(self.device).unsqueeze(1)
+        transformed_points = self.predictor.transform.apply_coords_torch(points, img.shape[:2])
+        masks, scores, logits = self.predictor.predict_torch(
+		point_coords=transformed_points,
+		point_labels=labels,
+		boxes=None,  # only one box
+		multimask_output=False,
+	)
+        masks = masks.cpu().detach().numpy()
+        mask_all = np.ones((img.shape[0], img.shape[1], 3))
+        for ann in masks:
+            color_mask = np.random.random((1, 3)).tolist()[0]
+        for i in range(3):
+            mask_all[ann[0] == True, i] = color_mask[i]
+        img = img / 255 * 0.3 + mask_all * 0.7
+        gc.collect()
+        torch.cuda.empty_cache()
+        self.predictor.reset_image()
+        return img, mask_all
+    def auto_segment(self,img:np.ndarray):
+        # for point in points:
+        #     cv2.drawMarker(img, point, colors[1], markerType=markers[1], markerSize=10, thickness=3)
         
-        if img[..., 0][0, 0] == img[..., 2][0, 0]:  # BGR to RGB
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        result, mask_all = self.segment_one(img)
+        # if img[..., 0][0, 0] == img[..., 2][0, 0]:  # BGR to RGB
+        #     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        result, mask_all = self.segment_in_one(img)
         return Image.fromarray((result * 255).astype(np.uint8)), Image.fromarray((mask_all * 255).astype(np.uint8))
     
 class Points(BaseModel):
