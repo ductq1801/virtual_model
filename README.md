@@ -15,7 +15,7 @@ Demo with gradio
 ```
 python demo.py
 ```
-###API
+### API
 1. Clothes segmentation
 ```
 import requests
