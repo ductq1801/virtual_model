@@ -52,12 +52,6 @@ async def predict_image(data:Model_gen):
     user_negaprompt = data.user_negaprompt
     quality = data.quality
     step = max(0,quality)*20 + 40
-    if quality==0:
-      step = 40
-    elif quality==1:
-      step = 60
-    else:
-      step = 80
     n_sample = data.n_sample
     output = model.gen_img(image=img,mask=mask,add_prompt=user_prompt,add_nega_prompt=user_negaprompt,steps=step,n_samples=n_sample)
     results = []
