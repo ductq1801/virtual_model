@@ -105,7 +105,7 @@ class Segment:
         return result, mask_all
     def segment(self,img:np.array,points:list[tuple]):
         for point in points:
-            cv2.drawMarker(img, point, colors[0], markerType=markers[0], markerSize=10, thickness=3)
+            cv2.drawMarker(img, point, colors[1], markerType=markers[1], markerSize=10, thickness=3)
         
         if img[..., 0][0, 0] == img[..., 2][0, 0]:  # BGR to RGB
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

@@ -36,7 +36,7 @@ async def img_segment(data:Points):
     y_points = list(map(int, data.y_points))
     if len(x_points) != len(y_points):
         raise HTTPException(status_code=400, detail="Size of x list and y list not equal")
-    points = zip(x_points,y_points)
+    points = zip(y_points,x_points)
     img,mask = segment.segment(points=points,img=img_np)
     buffered1 = BytesIO()
     buffered2 = BytesIO()
