@@ -68,3 +68,4 @@ mydata = {'img_base64':str_img,
 
 x = requests.post(url=url+'/model_gen/',json=mydata)
 ```
+See notebook/sample_input.ipynb for more details
