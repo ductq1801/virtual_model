@@ -9,7 +9,7 @@ import nest_asyncio
 from pyngrok import ngrok
 import uvicorn
 import numpy as np
-
+from utils import PIL_to_base64,base64_to_PIL
 device = "cuda"
 
 app = FastAPI()
@@ -50,12 +50,14 @@ async def img_segment(data:Points):
             'mask':mask_base64}
 @app.post("/model_gen/")
 async def predict_image(data:Model_gen):
-    img = Image.open(BytesIO(base64.b64decode(data['image_base64'])))
-    mask = Image.open(BytesIO(base64.b64decode(data['mask_base64'])))
-    user_prompt = data['user_prompt']
-    user_negaprompt = data['user_negaprompt']
-    quality = data['quality']
-    n_sample = data['n_sample']
+    img = base64_to_PIL(data.img_base64)
+    #img = Image.open(BytesIO(base64.b64decode(data['image_base64'])))
+    mask = base64_to_PIL(data.mask_base64)
+    #mask = Image.open(BytesIO(base64.b64decode(data['mask_base64'])))
+    user_prompt = data.user_prompt
+    user_negaprompt = data.user_negaprompt
+    quality = data.quality
+    n_sample = data.n_sample
 
     output = Vmodel.gen_img(image=img,mask=mask,add_prompt=user_prompt,add_nega_prompt=user_negaprompt,steps=quality,n_samples=n_sample)
     buffered = BytesIO()
