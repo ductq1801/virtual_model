@@ -3,12 +3,25 @@ from PIL import Image
 from io import BytesIO
 import base64
 def PIL_to_base64(image:PIL.Image):
-    buffered = BytesIO()
-    image.save(buffered, format="JPEG")
-    img_str =buffered.getvalue().decode('latin1')
-    return img_str
+    try:
+        # Convert NumPy array to PIL Image
+        
+
+        # Convert PIL Image to binary data
+        with BytesIO() as buffer:
+            # You can choose a different format if needed
+            image.save(buffer, format="PNG")
+            binary_data = buffer.getvalue()
+
+        # Encode binary data to base64
+        base64_encoded = base64.b64encode(binary_data).decode("utf-8")
+
+        return base64_encoded
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 def base64_to_PIL(img_str:str):
-    return Image.open(BytesIO((img_str.encode('latin1'))))
+    return Image.open(BytesIO(base64.b64decode(img_str.encode('utf-8'))))
 
 def dwpose_padd(img,dwpose,pad):
   w,h = img.size
@@ -25,3 +38,22 @@ def np_to_base64(img):
    im_bytes = img.tobytes()
    im_b64 = base64.b64encode(im_bytes)
    return im_b64
+
+def encode_np_array_to_base64(image_array):
+    try:
+        # Convert NumPy array to PIL Image
+        image = Image.fromarray(image_array)
+
+        # Convert PIL Image to binary data
+        with BytesIO() as buffer:
+            # You can choose a different format if needed
+            image.save(buffer, format="PNG")
+            binary_data = buffer.getvalue()
+
+        # Encode binary data to base64
+        base64_encoded = base64.b64encode(binary_data).decode("utf-8")
+
+        return base64_encoded
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
