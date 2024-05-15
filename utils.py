@@ -1,6 +1,7 @@
 import PIL
 from PIL import Image
 from io import BytesIO
+import base64
 def PIL_to_base64(image:PIL.Image):
     buffered = BytesIO()
     image.save(buffered, format="JPEG")
@@ -19,3 +20,8 @@ def dwpose_padd(img,dwpose,pad):
   res = Image.new(p_pose.mode, (w, h-pad), (0, 0, 0))
   res.paste(p_pose, (0, -pad))
   return res
+
+def np_to_base64(img):
+   im_bytes = img.tobytes()
+   im_b64 = base64.b64encode(im_bytes)
+   return im_b64

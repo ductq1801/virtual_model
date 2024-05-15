@@ -147,8 +147,6 @@ class Segment:
         return Image.fromarray((result * 255).astype(np.uint8)), Image.fromarray((mask_all * 255).astype(np.uint8))
   
 class Points(BaseModel):
-    x_points : List[int]
-    y_points : List[int]
     base_image: str
 class Model_gen(BaseModel):
     img_base64:str
