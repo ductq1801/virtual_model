@@ -9,7 +9,7 @@ import nest_asyncio
 from pyngrok import ngrok
 import uvicorn
 import numpy as np
-from utils import PIL_to_base64,base64_to_PIL,np_to_base64
+from utils import PIL_to_base64,base64_to_PIL,encode_np_array_to_base64
 from fast_sam import FastSAM, FastSAMPrompt
 
 device = "cuda"
@@ -28,20 +28,19 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
-@app.get("/")
-def home():
-  return "hello"
 @app.post("/segment/")
 async def img_segment(data:Points):
     img = Image.open(BytesIO(data.base_image.encode('latin1')))
     #img_np = np.array(img)
     ann  = FastSAMPrompt(img, fast_segment, device=device)
-    mask_base64 = [np_to_base64(mask) for mask in ann]
+    mask_base64 = [encode_np_array_to_base64(np.array(mask,dtype=np.int32)) for mask in ann]
     return {'results':mask_base64}
 @app.post("/model_gen/")
 async def predict_image(data:Model_gen):
     img = base64_to_PIL(data.img_base64)
-    mask = base64_to_PIL(data.mask_base64)
+    mask = np.zeros(img.size())
+    for mask in data.mask_base64:
+      mask += base64_to_PIL(mask)
     user_prompt = data.user_prompt
     user_negaprompt = data.user_negaprompt
     quality = data.quality
@@ -49,7 +48,6 @@ async def predict_image(data:Model_gen):
     n_sample = data.n_sample
     output = model.gen_img(image=img,mask=mask,add_prompt=user_prompt,add_nega_prompt=user_negaprompt,steps=step,n_samples=n_sample)
     results = []
-    print(output)
     for im in output:
         results.append(PIL_to_base64(im))
     return {"results":results}
