@@ -10,6 +10,11 @@ mim install "mmpose>=1.1.0"
 
 2. Weights requirements:
 download [this](https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth) then put in virtual_model/checkpoints
+
+download for fastSAM:
+```
+!wget https://huggingface.co/spaces/An-619/FastSAM/resolve/main/weights/FastSAM.pt
+```
 ### Demo:
 Demo with gradio
 ```
