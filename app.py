@@ -18,7 +18,7 @@ app = FastAPI()
 
 model = Vmodel()
 #segment = Segment(model_type="vit_h",device=device)
-fast_segment = FastSAM('/content/FastSAM.pt')
+fast_segment = FastSAM('checkpoints/FastSAM.pt')
 
 aut = "2gH5CZSLKRoH536OP1RGMXBq0nX_7A8G3sfXEDSJsDJ4jCHpo"
 app.add_middleware(
