@@ -28,12 +28,12 @@ def wh2whc(img):
     if len(img.shape) == 2:
         img = img[:,:,np.newaxis]
         ranc = lambda x:random.randint(0,255) * x
-        im = np.concatenate((img,img,img),axis=2)
+        im = np.concatenate((ranc(img),ranc(img),ranc(img)),axis=2)
         img = Image.fromarray(im.astype(np.uint8))
         return img
     elif len(img.shape) == 3 and img.shape[2] == 1:
         ranc = lambda x:random.randint(0,255) * x
-        im = np.concatenate((img,img,img),axis=2)
+        im = np.concatenate((ranc(img),ranc(img),ranc(img)),axis=2)
         img = Image.fromarray(im.astype(np.uint8))
         return img
     else:
