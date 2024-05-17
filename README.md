@@ -30,18 +30,13 @@ url =
 """
 input:
     base_image: string base64 image
-    x_points: [x1,x2,x3] list x-axis of points
-    y_points: [y1,y2,y3] list y-axis of points
 output:
     {
-        results : string base64 image + mask (latin1 encode),
-        mask: string base64 only mask,
+        results : list of string base64 mask,
     }
 """
 mydata = {
         'base_image': img_str,
-        'x_points':[720,320],
-        'y_points':[350,265],
         }
 
 x = requests.post(url=url+'/segment/',json=mydata)
