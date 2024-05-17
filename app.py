@@ -18,7 +18,7 @@ app = FastAPI()
 
 model = Vmodel()
 #segment = Segment(model_type="vit_h",device=device)
-fast_segment = FastSAM('/checkpoints/FastSAM.pt')
+fast_segment = FastSAM('checkpoints/FastSAM.pt')
 
 aut = "2gH5CZSLKRoH536OP1RGMXBq0nX_7A8G3sfXEDSJsDJ4jCHpo"
 app.add_middleware(
@@ -30,7 +30,7 @@ app.add_middleware(
 )
 @app.post("/segment/")
 async def img_segment(data:Points):
-    img = Image.open(BytesIO(data.base_image.encode('latin1')))
+    img = base64_to_PIL(data.base_image)
     #img_np = np.array(img)
     everything_results = fast_segment(img, device=device, retina_masks=True, imgsz=1024, conf=0.4, iou=0.9,)
     prompt_process  = FastSAMPrompt(img, everything_results, device=device)
