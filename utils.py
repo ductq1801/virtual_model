@@ -2,6 +2,8 @@ import PIL
 from PIL import Image
 from io import BytesIO
 import base64
+import numpy as np
+import random
 def PIL_to_base64(image:PIL.Image):
     try:
         # Convert NumPy array to PIL Image
@@ -22,7 +24,16 @@ def PIL_to_base64(image:PIL.Image):
         return None
 def base64_to_PIL(img_str:str):
     return Image.open(BytesIO(base64.b64decode(img_str.encode('utf-8'))))
-
+def wh2whc(img):
+    if len(img) == 2:
+        img = img[:,:,np.newaxis]
+    elif len(img) == 3 and img.shape[2] == 1:
+        ranc = lambda x:random.randint(0,255) * x
+        im = np.concatenate((img,img,img),axis=2)
+        img = Image.fromarray(im.astype(np.uint8))
+        return img
+    else:
+        raise TypeError("img dim should in [2,3]")
 def dwpose_padd(img,dwpose,pad):
   w,h = img.size
   h = h + pad

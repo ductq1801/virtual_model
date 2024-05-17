@@ -9,7 +9,7 @@ import nest_asyncio
 from pyngrok import ngrok
 import uvicorn
 import numpy as np
-from utils import PIL_to_base64,base64_to_PIL,encode_np_array_to_base64
+from utils import PIL_to_base64,base64_to_PIL,encode_np_array_to_base64,wh2whc
 from ultralytics.models.fastsam import FastSAM, FastSAMPrompt
 
 device = "cuda"
@@ -32,8 +32,14 @@ app.add_middleware(
 async def img_segment(data:Points):
     img = Image.open(BytesIO(data.base_image.encode('latin1')))
     #img_np = np.array(img)
-    ann  = FastSAMPrompt(img, fast_segment, device=device)
-    mask_base64 = [encode_np_array_to_base64(np.array(mask,dtype=np.int32)) for mask in ann]
+    everything_results = fast_segment(img, device=device, retina_masks=True, imgsz=1024, conf=0.4, iou=0.9,)
+    prompt_process  = FastSAMPrompt(img, everything_results, device=device)
+    ann = prompt_process.everything_prompt()
+    mask_base64 = []
+    for mask in ann[0]:
+        msk = mask.masks.data.cpu().numpy().squeeze()
+        msk = wh2whc(msk)
+        mask_base64.append(PIL_to_base64(msk))
     return {'results':mask_base64}
 @app.post("/model_gen/")
 async def predict_image(data:Model_gen):
