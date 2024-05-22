@@ -32,7 +32,7 @@ app.add_middleware(
 async def img_segment(data:Points):
     img = base64_to_PIL(data.base_image)
     #img_np = np.array(img)
-    everything_results = fast_segment(img, device=device, retina_masks=True, imgsz=1024, conf=0.4, iou=0.9,)
+    everything_results = fast_segment(img, device=device, retina_masks=True, conf=0.4, iou=0.9)
     prompt_process  = FastSAMPrompt(img, everything_results, device=device)
     ann = prompt_process.everything_prompt()
     mask_base64 = []
