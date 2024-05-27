@@ -1,6 +1,5 @@
-from fastapi import FastAPI, File, UploadFile,HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
 from model import Vmodel,Segment,Points,Model_gen
 from PIL import Image
 import base64
@@ -9,7 +8,7 @@ import nest_asyncio
 from pyngrok import ngrok
 import uvicorn
 import numpy as np
-from utils import PIL_to_base64,base64_to_PIL,encode_np_array_to_base64,wh2whc
+from utils import PIL_to_base64,base64_to_PIL,encode_np_array_to_base64,wh2whc,mask_2_transmask
 from ultralytics.models.fastsam import FastSAM, FastSAMPrompt
 
 device = "cuda"
@@ -17,8 +16,8 @@ device = "cuda"
 app = FastAPI()
 
 model = Vmodel()
-#segment = Segment(model_type="vit_h",device=device)
-fast_segment = FastSAM('checkpoints/FastSAM.pt')
+segment = Segment(model_type="vit_h",device=device)
+#fast_segment = FastSAM('checkpoints/FastSAM.pt')
 
 aut = "2gH5CZSLKRoH536OP1RGMXBq0nX_7A8G3sfXEDSJsDJ4jCHpo"
 app.add_middleware(
@@ -31,16 +30,30 @@ app.add_middleware(
 @app.post("/segment/")
 async def img_segment(data:Points):
     img = base64_to_PIL(data.base_image)
-    #img_np = np.array(img)
-    everything_results = fast_segment(img, device=device, retina_masks=True, conf=0.4, iou=0.9)
-    prompt_process  = FastSAMPrompt(img, everything_results, device=device)
-    ann = prompt_process.everything_prompt()
-    mask_base64 = []
-    for mask in ann[0]:
-        msk = mask.masks.data.cpu().numpy().squeeze()
-        msk = wh2whc(msk)
-        mask_base64.append(PIL_to_base64(msk))
-    return {'results':mask_base64}
+    img_np = np.array(img)
+    output = []
+    ### for fastSAM
+    # everything_results = fast_segment(img, device=device, retina_masks=True, conf=0.4, iou=0.9)
+    # prompt_process  = FastSAMPrompt(img, everything_results, device=device)
+    # ann = prompt_process.everything_prompt()
+    # mask_base64 = []
+    # for mask in ann[0]:
+    #     msk = mask.masks.data.cpu().numpy().squeeze()
+    #     msk = wh2whc(msk)
+    #     msk = mask_2_transmask(msk)
+    #     mask_base64.append(PIL_to_base64(msk))
+
+    ###for SAM
+    masks = segment.mask_generator.generate(img_np)
+    ans = [ann['segmentation'] for ann in masks]
+    for an in ans:
+      color, msk = wh2whc(an*1)
+      msk = mask_2_transmask(msk)
+      output.append({
+        'color': color,
+        'image_base64':PIL_to_base64(msk),
+        })
+    return {'results':output}
 @app.post("/model_gen/")
 async def predict_image(data:Model_gen):
     img = base64_to_PIL(data.img_base64)
