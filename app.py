@@ -49,9 +49,15 @@ async def img_segment(data:Points):
     for an in ans:
       color, msk = wh2whc(an*1)
       msk = mask_2_transmask(msk)
+      msk_display = np.array(msk)
+      msk_display[:,:,0][msk_display[:,:,0]>0] = 117
+      msk_display[:,:,1][msk_display[:,:,1]>0] = 48
+      msk_display[:,:,2][msk_display[:,:,2]>0] = 254
+      msk_display = Image.fromarray(msk_display.astype(np.uint8))
       output.append({
         'color': color,
         'image_base64':PIL_to_base64(msk),
+        'image_base64_display':PIL_to_base64(msk_display),
         })
     return {'results':output}
 @app.post("/model_gen/")
