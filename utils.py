@@ -24,18 +24,26 @@ def PIL_to_base64(image:PIL.Image):
         return None
 def base64_to_PIL(img_str:str):
     return Image.open(BytesIO(base64.b64decode(img_str.encode('utf-8'))))
+def ranc(img):
+  color = random.randint(0,255) 
+  img = img*color
+  return color,img
 def wh2whc(img):
     if len(img.shape) == 2:
         img = img[:,:,np.newaxis]
-        ranc = lambda x:random.randint(0,255) * x
-        im = np.concatenate((ranc(img),ranc(img),ranc(img)),axis=2)
+        r,rimg = ranc(img)
+        g,gimg = ranc(img)
+        b,bimg = ranc(img)
+        im = np.concatenate((rimg,gimg,bimg),axis=2)
         img = Image.fromarray(im.astype(np.uint8))
-        return img
+        return '{},{},{}'.format(r,g,b),img
     elif len(img.shape) == 3 and img.shape[2] == 1:
-        ranc = lambda x:random.randint(0,255) * x
-        im = np.concatenate((ranc(img),ranc(img),ranc(img)),axis=2)
+        r,rimg = ranc(img)
+        g,gimg = ranc(img)
+        b,bimg = ranc(img)
+        im = np.concatenate((rimg,gimg,bimg),axis=2)
         img = Image.fromarray(im.astype(np.uint8))
-        return img
+        return '{},{},{}'.format(r,g,b),img
     else:
         raise TypeError("img dim should in [2,3]")
 def dwpose_padd(img,dwpose,pad):
@@ -53,7 +61,16 @@ def np_to_base64(img):
    im_bytes = img.tobytes()
    im_b64 = base64.b64encode(im_bytes)
    return im_b64
-
+def mask_2_transmask(img):
+  im = np.array(img)
+  w,h,c = im.shape
+  tl = np.zeros((w,h,4))
+  tl[:,:,:3] = img
+  tl[:,:,3] = 0
+  tl[:,:,3][im[:,:,0]>0] = 255
+  tl[:,:,3][im[:,:,1]>0] = 255
+  tl[:,:,3][im[:,:,2]>0] = 255
+  return Image.fromarray(tl.astype(np.uint8))
 def encode_np_array_to_base64(image_array):
     try:
         # Convert NumPy array to PIL Image
