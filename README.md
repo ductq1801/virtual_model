@@ -52,9 +52,10 @@ input:
     img_base64: string base64 image
     mask_base64: string base64 mask
     user_prompt: string prompt
+    positive_prompt: string negative prompt
     negative_prompt: string negative prompt
-    quality: int 0-2
-    n_sample: int
+    quality:[optional] int 0-4 | default=1
+    n_sample:[optional] int | default=2
 output:
     {
         'results': list of string base64 image 
