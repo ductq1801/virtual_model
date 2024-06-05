@@ -63,7 +63,7 @@ async def img_segment(data:Points):
 @app.post("/model_gen/")
 async def predict_image(data:Model_gen):
     img = base64_to_PIL(data.img_base64)
-    mask = np.zeros(img.size())
+    mask = np.zeros(img.size)
     for mask in data.mask_base64:
       mask += base64_to_PIL(mask)
     user_prompt = data.user_prompt
