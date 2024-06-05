@@ -19,7 +19,12 @@ models = {
 
 colors = [(255, 0, 0), (0, 255, 0)]
 markers = [1, 5]
-
+###list model to change
+### stablediffusionapi/realistic-vision-v6.0-b1-inpaint
+### stablediffusionapi/epicrealismnew
+### stablediffusionapi/realistic-vision-v51
+###
+###
 class Vmodel:
     def __init__(self):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -31,7 +36,7 @@ class Vmodel:
             ControlNetModel.from_pretrained("frankjoshua/control_v11f1p_sd15_depth", torch_dtype=torch.float16,low_cpu_mem_usage=True),
         ]
         self.sd_pipe = StableDiffusionControlNetInpaintPipeline.from_pretrained(
-            "stablediffusionapi/epicrealismnew",controlnet=multi_controlnet ,torch_dtype=torch.float16,low_cpu_mem_usage=True
+            "stablediffusionapi/realistic-vision-v51",controlnet=multi_controlnet ,torch_dtype=torch.float16,low_cpu_mem_usage=True
         ).to(self.device)
         self.sd_pipe.enable_xformers_memory_efficient_attention()
 
