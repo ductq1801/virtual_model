@@ -54,8 +54,8 @@ input:
     user_prompt: string prompt
     positive_prompt: string negative prompt
     negative_prompt: string negative prompt
-    quality:[optional] int 0-4 | default=1
-    n_sample:[optional] int | default=2
+    quality:[optional] int 0-4 | default=1  ###fixed value for future work
+    n_sample:[optional] int | default=2 ###fixed value for future work
 output:
     {
         'results': list of string base64 image 
