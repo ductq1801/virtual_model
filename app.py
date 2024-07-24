@@ -64,8 +64,8 @@ async def img_segment(data:Points):
 async def predict_image(data:Model_gen):
     img = base64_to_PIL(data.img_base64)
     mask = np.zeros(img.size)
-    for mask in data.mask_base64:
-      mask += base64_to_PIL(mask)
+    for masks in data.mask_base64:
+      mask += base64_to_PIL(masks)
     user_prompt = data.user_prompt
     user_negaprompt = data.user_negaprompt
     quality = data.quality
